@@ -7,7 +7,8 @@ function formatMinutes(totalMinutes) {
   const s = totalSeconds % 60;
   const pad = (num) => String(num).padStart(2, "0");
 
-  // Inclui horas apenas se h > 0
+  // Formato desejado: Hh MMm SSs
+  // Inclui horas apenas se h > 0; minutos e segundos sempre com 2 dígitos
   const hoursPart = h > 0 ? `${h}h ` : "";
   return `${hoursPart}${pad(m)}m ${pad(s)}s`;
 }

@@ -116,6 +116,7 @@ const Message = styled.div`
 `;
 
 export default function RecoveryModal({ onClose }) {
+  const API_BASE = import.meta.env.VITE_API_URL || "";
   const [step, setStep] = useState(1); // 1: email, 2: code, 3: new password
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -133,7 +134,7 @@ export default function RecoveryModal({ onClose }) {
     try {
       if (step === 1) {
         // Enviar solicitação de código
-        const res = await fetch("/api/request-recovery", {
+        const res = await fetch(`${API_BASE}/api/request-recovery`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email }),
@@ -147,7 +148,7 @@ export default function RecoveryModal({ onClose }) {
         }
       } else if (step === 2) {
         // Verificar código
-        const res = await fetch("/api/verify-code", {
+        const res = await fetch(`${API_BASE}/api/verify-code`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, code }),
@@ -164,7 +165,7 @@ export default function RecoveryModal({ onClose }) {
           throw new Error("As senhas não coincidem");
         }
 
-        const res = await fetch("/api/reset-password", {
+        const res = await fetch(`${API_BASE}/api/reset-password`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, code, newPassword }),

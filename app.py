@@ -9,9 +9,36 @@ from datetime import datetime, timedelta
 import random
 import os
 
+# Tentativa de importar e configurar Firebase Admin (Firestore)
+try:
+    import firebase_admin
+    from firebase_admin import credentials, firestore
+    FIRESTORE_AVAILABLE = True
+except Exception:
+    FIRESTORE_AVAILABLE = False
 app = Flask(__name__, static_folder='static')
 app.secret_key = "chave_secreta_maroni_i40"
 
+# Inicializa o Firebase Admin SDK se disponível. A inicialização
+# tenta usar a variável de ambiente FIREBASE_CREDENTIALS apontando
+# para um arquivo JSON de service account. Se não definida, tenta
+# inicializar com as credenciais padrão da máquina (ADC).
+if FIRESTORE_AVAILABLE:
+    try:
+        # se já inicializado, get_app() não levantará erro
+        firebase_admin.get_app()
+    except ValueError:
+        try:
+            cred_path = os.environ.get('FIREBASE_CREDENTIALS')
+            if cred_path and os.path.exists(cred_path):
+                cred = credentials.Certificate(cred_path)
+                firebase_admin.initialize_app(cred)
+            else:
+                # tenta inicializar com credenciais padrão (ADC)
+                firebase_admin.initialize_app()
+        except Exception as e:
+            print("[warning] Não foi possível inicializar Firebase Admin SDK:", e)
+            FIRESTORE_AVAILABLE = False
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve_react_app(path):
@@ -184,6 +211,37 @@ def api_data():
     """Rota para o JavaScript buscar dados em JSON."""
     payload = generate_sample_data()
     return jsonify(payload)
+
+
+# ------------------------------------
+# --- Rota para recuperar motivos do Firestore ---
+# ------------------------------------
+@app.route("/api/reasons")
+def api_reasons():
+    """Retorna a lista de motivos de parada armazenados na coleção
+    `motivos_parada` do Firestore.
+
+    Em desenvolvimento, se o Firebase Admin SDK não estiver configurado,
+    a rota retorna 503 para indicar que o serviço não está disponível.
+    """
+    if not FIRESTORE_AVAILABLE:
+        return jsonify({"error": "firestore_unavailable", "message": "Firestore não está configurado no servidor."}), 503
+
+    try:
+        db = firestore.client()
+        coll = db.collection('motivos_parada')
+        docs = coll.stream()
+        reasons = []
+        for d in docs:
+            item = d.to_dict() or {}
+            # inclui o id do documento para referência no frontend
+            item['id'] = d.id
+            reasons.append(item)
+
+        return jsonify({"ok": True, "reasons": reasons})
+    except Exception as e:
+        # Em caso de erro, retornamos detalhe para facilitar o debug local
+        return jsonify({"error": "firestore_error", "detail": str(e)}), 500
 
 @app.route("/api/register_stop", methods=["POST"])
 def register_stop():

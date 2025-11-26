@@ -17,6 +17,8 @@ const HeaderInfo = styled.div`
   flex: 1;
 `;
 
+// Centraliza o título horizontalmente usando transform e left:50%
+// Isso garante centralização precisa mesmo com elementos à esquerda/direita
 const CenteredTitle = styled.div`
   position: absolute;
   left: 50%;
@@ -66,7 +68,11 @@ const Button = styled.button`
 export default function Header({ username, setIsLoggedIn, setShowStopForm }) {
   const logout = async () => {
     try {
-      await fetch("/api/logout", { method: "POST", credentials: "include" });
+      const API_BASE = import.meta.env.VITE_API_URL || "";
+      await fetch(`${API_BASE}/api/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
     } catch (e) {
       // ignore
     }

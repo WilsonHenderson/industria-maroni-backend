@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import RecoveryModal from "./RecoveryModal";
+const API_BASE = import.meta.env.VITE_API_URL || "";
 
 const LoginContainer = styled.div`
   position: fixed;
@@ -156,7 +157,7 @@ export default function Login({ setLoggedIn, setUsername }) {
         // Implementar chamada de registro
       } else {
         // Login
-        const res = await fetch("/api/login", {
+        const res = await fetch(`${API_BASE}/api/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -171,7 +172,17 @@ export default function Login({ setLoggedIn, setUsername }) {
         }
       }
     } catch (err) {
-      setError(err.message);
+      // map network/fetch errors to a user-friendly message
+      if (
+        err.message &&
+        err.message.toLowerCase().includes("failed to fetch")
+      ) {
+        setError(
+          "Erro de rede ao conectar com o backend. Verifique se o backend está rodando e acessível (ou forneça uma URL pública)."
+        );
+      } else {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -180,7 +191,7 @@ export default function Login({ setLoggedIn, setUsername }) {
   const handlePasswordRecovery = async (email) => {
     try {
       // Implementar recuperação de senha
-      const res = await fetch("/api/recover-password", {
+      const res = await fetch(`${API_BASE}/api/request-recovery`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),

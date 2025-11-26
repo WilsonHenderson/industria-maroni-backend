@@ -96,7 +96,8 @@ export default function StopForm({ onClose, onSuccess: onStopRegistered }) {
     setSubmitting(true);
 
     try {
-      const res = await fetch("/api/register_stop", {
+      const API_BASE = import.meta.env.VITE_API_URL || "";
+      const res = await fetch(`${API_BASE}/api/register_stop`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

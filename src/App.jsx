@@ -107,6 +107,7 @@ const AppContainer = styled.div`
 const MONITORED_MACHINE = "Máquina 01";
 
 export default function App() {
+  const API_BASE = import.meta.env.VITE_API_URL || "";
   const [rawData, setRawData] = useState([]);
   const [error, setError] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -117,7 +118,7 @@ export default function App() {
     let mounted = true;
     const fetchData = async () => {
       try {
-        const res = await fetch("/api/data");
+        const res = await fetch(`${API_BASE}/api/data`);
         if (!res.ok) throw new Error("Network response was not ok");
         const json = await res.json();
         // API may return {stops: [...] } or just an array
@@ -125,7 +126,11 @@ export default function App() {
         if (mounted) setRawData(stops);
         setError(null);
       } catch (err) {
-        setError(err.message);
+        setError(
+          err.message.includes("Failed to fetch")
+            ? "Erro de rede ao conectar com o backend."
+            : err.message
+        );
       }
     };
 
@@ -143,7 +148,9 @@ export default function App() {
   useEffect(() => {
     const check = async () => {
       try {
-        const res = await fetch("/api/status", { credentials: "include" });
+        const res = await fetch(`${API_BASE}/api/status`, {
+          credentials: "include",
+        });
         if (!res.ok) return;
         const j = await res.json();
         if (j.logged_in) {
@@ -177,7 +184,7 @@ export default function App() {
 
   // function to call when new stop is registered
   const handleStopRegistered = async () => {
-    const res = await fetch("/api/data");
+    const res = await fetch(`${API_BASE}/api/data`);
     if (!res.ok) throw new Error("Network response was not ok");
     const json = await res.json();
     const stops = Array.isArray(json) ? json : json.stops || [];
